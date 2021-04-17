@@ -1,7 +1,9 @@
 .data
 name: .string "1A5B8F"
-name1: .string "GGG"
 newline: .string "\n"
+message: .string "lala\n"
+black2s: .string "FFFFEEFF"
+black2: .int 0x46
 .bss
 vale: .short
 
@@ -9,20 +11,36 @@ vale: .short
 .globl _start                
 _start:
 
-    movl $0, %edi
-
-    movb name, %ah
-    movb %ah, vale
-    movb name, %al
-    movb %al, vale(,2)
+   mov $0,%esi
+   lala:
+   inc %esi
+   mov $0 ,%eax
+   mov $0 ,%ebx
 
 
 
     movl $4, %eax
     movl $1, %ebx
-    movl $vale,%ecx
-    movl $8, %edx
+    movl $message,%ecx
+    movl $5, %edx
     int $0x80
+
+   mov black2, %ebx
+   movb black2s(,%esi,1), %al
+
+   cmp %eax, %ebx
+   je lala 
+
+
+
+    mov %eax , %ecx
+    movl $4, %eax
+    movl $1, %ebx
+    //movl $black2s,%ecx
+    movl $2, %edx
+    int $0x80
+
+    
 
     movl $4, %eax
     movl $1, %ebx
@@ -30,7 +48,11 @@ _start:
     movl $1, %edx
     int $0x80
 
+
  # exit(0)
     movl    $1, %eax  
     movl    $0, %ebx   
     int     $0x80   
+
+
+
