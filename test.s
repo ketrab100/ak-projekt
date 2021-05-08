@@ -5,6 +5,7 @@ buf: .string "0"
 len: .long 0x86
 sizex: .int 0
 sizey: .int 0
+paddingBytes: .int 0
 R:.int 0
 G:.int 0
 B:.int 0
@@ -37,20 +38,35 @@ _start:
     int $0x80
 
 # print
-   movl $4, %eax
-   movl $1, %ebx
-   movl $buf,%ecx
-   movl len, %edx
-   int $0x80
+    movl $4, %eax
+    movl $1, %ebx
+    movl $buf,%ecx
+    movl len, %edx
+    int $0x80
 
 # get size
-  movl $18, %edi 
-  movl buf(,%edi,1), %eax
-  movl %eax, sizex
-  movl $22, %edi 
-  movl buf(,%edi,1), %eax
-  movl %eax, sizey
-
+    movl $18, %edi 
+    movl buf(,%edi,1), %eax
+    movl %eax, sizex
+    movl $22, %edi 
+    movl buf(,%edi,1), %eax
+    movl %eax, sizey
+# calcPaddingBytes
+    movl $3, %eax # 3 bajty na pixel
+    mull sizex
+    clc
+subl4:
+    subl $4, %eax
+    cmpl $0, %eax
+    je next1
+    jc next
+    jmp subl4
+next:
+    movl $-1 , %ebx
+    mull %ebx
+    movl %eax, paddingBytes
+next1:
+    movl %eax, paddingBytes
 # get DIBHeaderSize
     movl $14, %edi 
     movl buf(,%edi,1), %eax
@@ -67,8 +83,11 @@ _start:
     movl sizey, %ebx
     divl %ebx # wysokosci polowy obrazka w rejestrze D
     movl %edx, %eax
+    movl %edx, %ebx
     mull %ecx
-
+    addl %eax, offset
+    movl %ebx, %eax 
+    mull paddingBytes
     addl %eax, offset
     movl offset, %edi
 jump:
@@ -121,17 +140,17 @@ countBlackPixels:
 checkR1:
     cmpl R, %eax
     je checkG1
-    jmp next
+    jmp end
 checkG1:
     cmpl G, %eax
     je checkB1
-    jmp next
+    jmp end
 checkB1:
     cmpl B, %eax
     je countBlackPixels
-    jmp next
+    jmp end
 
-next:
+end:
 
  # exit(0)
     movl    $1, %eax  
