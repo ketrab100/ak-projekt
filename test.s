@@ -1,10 +1,16 @@
 .data
-name: .string "./b.bmp"
+name: .string "./d.bmp"
 fd: .int 0
 buf: .string "0"
 len: .long 0x86
 sizex: .int 0
 sizey: .int 0
+R:.int 0
+G:.int 0
+B:.int 0
+DIBHeaderSize: .int 0
+pixelsPerBar: .int 0
+offset: .int 0
 .text                       
 .globl _start                
 _start:
@@ -45,8 +51,87 @@ _start:
   movl buf(,%edi,1), %eax
   movl %eax, sizey
 
+# get DIBHeaderSize
+    movl $14, %edi 
+    movl buf(,%edi,1), %eax
+    movl %eax, DIBHeaderSize
 
+# get pixelsPerBar
+    movl DIBHeaderSize, %eax
+    addl $14, %eax
+    movl %eax, offset
+    movl $3, %eax
+    mull sizex
+    movl %eax, %ecx # ilosc bajtow w jednym wierszu w rejestrze C
+    movl $2, %eax
+    movl sizey, %ebx
+    divl %ebx # wysokosci polowy obrazka w rejestrze D
+    movl %edx, %eax
+    mull %ecx
 
+    addl %eax, offset
+    movl offset, %edi
+jump:
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , R
+    inc %edi
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , G
+    inc %edi
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , B
+    inc %edi
+
+    movl $0, %eax
+checkR:
+    cmpl R, %eax
+    je checkG
+    jmp jump
+checkG:
+    cmpl G, %eax
+    je checkB
+    jmp jump
+checkB:
+    cmpl B, %eax
+    je countBlackPixels
+    jmp jump
+
+countBlackPixels:
+    movl pixelsPerBar, %eax
+    inc %eax
+    movl %eax, pixelsPerBar 
+
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , R
+    inc %edi
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , G
+    inc %edi
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , B
+    inc %edi
+
+    movl $0, %eax
+checkR1:
+    cmpl R, %eax
+    je checkG1
+    jmp next
+checkG1:
+    cmpl G, %eax
+    je checkB1
+    jmp next
+checkB1:
+    cmpl B, %eax
+    je countBlackPixels
+    jmp next
+
+next:
 
  # exit(0)
     movl    $1, %eax  
