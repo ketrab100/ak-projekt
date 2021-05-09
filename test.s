@@ -1,133 +1,138 @@
-.data									                    # data section
-name: .string "./d.bmp"							            # path to bmp file (this folder d.bmp)
-fd: .int 0								                    # filedecryptor
-buf: .string "0"							                # bufor = string ="0"
-len: .long 0x86                                             # lenght of file
-sizex: .int 0                                               # number of pixels in x axis
-sizey: .int 0                                               # number of pixels in y axis
-paddingBytes: .int 0                                        # number of padding bytes
-R:.int 0                                                    # R=0
-G:.int 0                                                    # G=0
-B:.int 0                                                    # B=0
-DIBHeaderSize: .int 0                                       #DIBHeader lenght
-pixelsPerBar: .int 0                                        #pixelsPerBar
-offset: .int 0                                              #offset
-.text                                                       #"code" section
+.data
+name: .string "./a.bmp"
+fd: .int 0
+buf: .string "0"
+len: .long 0x86
+sizex: .int 0
+sizey: .int 0
+R:.int 0
+G:.int 0
+B:.int 0
+DIBHeaderSize: .int 0
+pixelsPerBar: .int 0
+paddingBytes: .int 0
+offset: .int 0
+.text                       
 .globl _start                
 _start:
 # open file
-    movl $5, %eax                                           # sys_open
-    movl $name, %ebx                                        #name to ebx
-    movl $0, %ecx                                           # access: read-only
-    movl $0777, %edx                                        # read, write and execute by all
-    int $0x80                                               # system call
+    movl $5, %eax # sys_open
+    movl $name, %ebx
+    movl $0, %ecx # access: read-only
+    movl $0777, %edx # read, write and execute by all
+    int $0x80
 
 # get file descriptor
-    movl %eax, fd                                           #save filedecryptor to fd (eax value to fd)
+    movl %eax, fd
 
 # read from file
-    movl $3, %eax                                           # sys_read
-    movl fd, %ebx                                           # filedecryptor to ebx
-    movl $buf, %ecx                                         # buf to ecx (ecx = .string "0")
-    movl $len, %edx                                         # lenght of file to edx
-    int $0x80                                               # system call
+    movl $3, %eax # sys_read
+    movl fd, %ebx
+    movl $buf, %ecx
+    movl $len, %edx
+    int $0x80
 
 # close file
-    movl $6, %eax                                           # sys_close
-    movl $name, %ebx                                        # name to ebx
-    int $0x80                                               # system call
+    movl $6, %eax # sys_close
+    movl $name, %ebx
+    int $0x80
 
 # print
-   movl $4, %eax                                            # 4 to eax
-   movl $1, %ebx                                            # 1 to ebx
-   movl $buf,%ecx                                           # buf to ecx
-   movl len, %edx                                           # len to edx
-   int $0x80                                                # system call
+   movl $4, %eax
+   movl $1, %ebx
+   movl $buf,%ecx
+   movl len, %edx
+   int $0x80
 
 # get size
-  movl $18, %edi                                            # 18 to edi (byte number 18)
-  movl buf(,%edi,1), %eax                                   # get value of sizex from file, then save to eax
-  movl %eax, sizex                                          # eax to sizex
-  movl $22, %edi                                            # 22 to edi (byte number 22)
-  movl buf(,%edi,1), %eax                                   # get value of sizey from file then save to eax
-  movl %eax, sizey                                          # eax to sizey
+  movl $18, %edi 
+  movl buf(,%edi,1), %eax
+  movl %eax, sizex
+  movl $22, %edi 
+  movl buf(,%edi,1), %eax
+  movl %eax, sizey
 
 # calcPaddingBytes
     movl $3, %eax                                           # 3 to eax (3 bytes per color)
     mull sizex                                              # eax *= sizex
+    movl %eax, %ecx
     clc                                                     # clear carry flag
-    
-subl4:
-    subl $4, %eax                                           # eax/=4
-    mull $4, %eax                                           # eax*=4
-    movl $3, %ebx                                           # 3 to ebx
-    mull sizex, %ebx                                        # ebx*=sizex
-    subl %eax, %ebx                                         # ebx -= eax  (3*sizex-[3*sizex/4*4] == 3*sizex%4)
-    movl %ebx, paddingBytes                                 # ebx to paddingBytes
-
-next:
-    movl $-1 , %ebx
-    mull %ebx
+    movl $4, %ebx
+    divl %ebx                                               # eax/=4
+    mull %ebx                                               # eax*=4 
+    subl %ecx, %eax                                         # ecx -= eax  (3*sizex-[3*sizex/4*4] == 3*sizex%4)
+    cmp $0, %eax
+    je padding0
+    addl $4, %eax
     movl %eax, paddingBytes
+    jmp endCalcPaddingBytes
+padding0:
+    movl $0, paddingBytes
+endCalcPaddingBytes:
 
 # get DIBHeaderSize
-    movl $14, %edi                                          # 14 to edi (byte number 14)
-    movl buf(,%edi,1), %eax                                 # get value of DIBHeaderSize from file, then save to eax
-    movl %eax, DIBHeaderSize                                # save eax to DIBHeaderSize
+    movl $14, %edi 
+    movl buf(,%edi,1), %eax
+    movl %eax, DIBHeaderSize
 
 # get pixelsPerBar
-    movl DIBHeaderSize, %eax                                # DIBHeaderSize to eax
-    addl $14, %eax                                          # add 14 to eax (header is always 14)
-    movl %eax, offset                                       # beginning of pixels
-    # to tez da sie wyciagnac z infoheadera
-    movl $3, %eax                                           # 3 to eax (3 bytes per color)
-    mull sizex                                              # eax = number of bytes per row
-    movl %eax, %ecx                                         # eax to ecx
-    movl $2, %eax                                           # 2 to eax
-    movl sizey, %ebx                                        # sizey to ebx
-    divl %ebx                                               # ebx over eax - middle row (number of pixels/2), saved in edx
-    movl %edx, %eax                                         # edx to eax
-    movl %edx, %ebx                                         # edx to ebx
-    mull %ecx                                               # eax times ecx - number of starting byte of middle row
+    movl DIBHeaderSize, %eax
+    addl $14, %eax
+    movl %eax, offset
 
-    addl %eax, offset                                       # offset+=eax - total offset
-    movl offset, %edi                                       # offset to edi
+    movl $3, %eax
+    mull sizex
+    movl %eax, %ecx # ilosc bajtow w jednym wierszu w rejestrze C
+    movl $2, %ebx
+    movl sizey, %eax
+    divl %ebx # wysokosci polowy obrazka w rejestrze A
+    mull %ecx
 
-jump:                                                       # check next pixel
-    movl $0, %eax                                           # 0 to eax
-    movb buf(,%edi,1), %al                                  # get first byte value of edi from file to al
-    mov %al , R                                             # save al to R
-    inc %edi                                                # edi++ (adds one byte)
+    addl %eax, offset
+
+    movl $2, %ebx
+    movl sizey, %eax
+    divl %ebx # wysokosci polowy obrazka w rejestrze A
+    mull paddingBytes
+
+    addl %eax, offset
+
+    movl offset, %edi
+jump:
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , R
+    inc %edi
     movl $0, %eax
     movb buf(,%edi,1), %al
     mov %al , G
-    inc %edi                                               
+    inc %edi
     movl $0, %eax
     movb buf(,%edi,1), %al
     mov %al , B
-    inc %edi                                                
+    inc %edi
 
-    movl $0, %eax                                           # 0 to eax
+    movl $0, %eax
 checkR:
-    cmpl R, %eax                                            # if R==eax
-    je checkG                                               # checkG
-    jmp jump                                                # else go to jump
+    cmpl R, %eax
+    je checkG
+    jmp jump
 checkG:
     cmpl G, %eax
     je checkB
     jmp jump
 checkB:
-    cmpl B, %eax                                            # if B==eax
-    je countBlackPixels                                     # countBlackPixels
-    jmp jump                                                # else go to jump
+    cmpl B, %eax
+    je countBlackPixels
+    jmp jump
 
-countBlackPixels:                                           # increases current black pixel count
-    movl pixelsPerBar, %eax                                 # pixelsPerBar to eax
-    inc %eax                                                # eax++
-    movl %eax, pixelsPerBar                                 # eax to pixelsPerBar
+countBlackPixels:
+    movl pixelsPerBar, %eax
+    inc %eax
+    movl %eax, pixelsPerBar 
 
-    movl $0, %eax                                           
-    movb buf(,%edi,1), %al                                  
+    movl $0, %eax
+    movb buf(,%edi,1), %al
     mov %al , R
     inc %edi
     movl $0, %eax
