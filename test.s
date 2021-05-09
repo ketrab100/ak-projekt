@@ -1,5 +1,5 @@
 .data
-name: .string "./d.bmp"
+name: .string "./a.bmp"
 fd: .int 0
 buf: .string "0"
 len: .long 0x86
@@ -10,6 +10,7 @@ G:.int 0
 B:.int 0
 DIBHeaderSize: .int 0
 pixelsPerBar: .int 0
+paddingBytes: .int 0
 offset: .int 0
 .text                       
 .globl _start                
@@ -51,6 +52,24 @@ _start:
   movl buf(,%edi,1), %eax
   movl %eax, sizey
 
+# calcPaddingBytes
+    movl $3, %eax                                           # 3 to eax (3 bytes per color)
+    mull sizex                                              # eax *= sizex
+    movl %eax, %ecx
+    clc                                                     # clear carry flag
+    movl $4, %ebx
+    divl %ebx                                               # eax/=4
+    mull %ebx                                               # eax*=4 
+    subl %ecx, %eax                                         # ecx -= eax  (3*sizex-[3*sizex/4*4] == 3*sizex%4)
+    cmp $0, %eax
+    je padding0
+    addl $4, %eax
+    movl %eax, paddingBytes
+    jmp endCalcPaddingBytes
+padding0:
+    movl $0, paddingBytes
+endCalcPaddingBytes:
+
 # get DIBHeaderSize
     movl $14, %edi 
     movl buf(,%edi,1), %eax
@@ -60,16 +79,24 @@ _start:
     movl DIBHeaderSize, %eax
     addl $14, %eax
     movl %eax, offset
+
     movl $3, %eax
     mull sizex
     movl %eax, %ecx # ilosc bajtow w jednym wierszu w rejestrze C
-    movl $2, %eax
-    movl sizey, %ebx
-    divl %ebx # wysokosci polowy obrazka w rejestrze D
-    movl %edx, %eax
+    movl $2, %ebx
+    movl sizey, %eax
+    divl %ebx # wysokosci polowy obrazka w rejestrze A
     mull %ecx
 
     addl %eax, offset
+
+    movl $2, %ebx
+    movl sizey, %eax
+    divl %ebx # wysokosci polowy obrazka w rejestrze A
+    mull paddingBytes
+
+    addl %eax, offset
+
     movl offset, %edi
 jump:
     movl $0, %eax
