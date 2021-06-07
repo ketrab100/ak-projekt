@@ -1,7 +1,7 @@
 .data
-name: .string "./a.bmp"
+name: .string "./ean-81.bmp"
 fd: .int 0
-buf: .string "0"
+buf: .space 3000000
 len: .long 0x86
 sizex: .int 0
 sizey: .int 0
@@ -12,6 +12,10 @@ DIBHeaderSize: .int 0
 pixelsPerBar: .int 0
 paddingBytes: .int 0
 offset: .int 0
+result: 
+    .long 0,0,0,0,0,0,0,0
+    result_len = (.-result)
+
 .text                       
 .globl _start                
 _start:
@@ -112,18 +116,18 @@ jump:
     mov %al , B
     inc %edi
 
-    movl $0, %eax
+    movl $50, %eax
 checkR:
     cmpl R, %eax
-    je checkG
+    ja checkG
     jmp jump
 checkG:
     cmpl G, %eax
-    je checkB
+    ja checkB
     jmp jump
 checkB:
     cmpl B, %eax
-    je countBlackPixels
+    ja countBlackPixels
     jmp jump
 
 countBlackPixels:
@@ -144,22 +148,87 @@ countBlackPixels:
     mov %al , B
     inc %edi
 
-    movl $0, %eax
+    movl $50, %eax
 checkR1:
     cmpl R, %eax
-    je checkG1
+    ja checkG1
     jmp next
 checkG1:
     cmpl G, %eax
-    je checkB1
+    ja checkB1
     jmp next
 checkB1:
     cmpl B, %eax
-    je countBlackPixels
+    ja countBlackPixels
     jmp next
-
 next:
 
+    # pominiecie paskow startowych
+    mov pixelsPerBar, %eax
+    dec %eax
+    mov $3, %ebx
+    mul %ebx
+    addl %eax, %edi 
+
+    mov pixelsPerBar, %eax
+    mov $3, %ebx
+    mul %ebx
+    addl %eax, %edi 
+    movl $0, %ebx
+    mov $0, %edx
+
+decode:
+    movl $8, %ecx
+decodeOneNumber:
+
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , R
+    inc %edi
+
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , G
+    inc %edi
+
+    movl $0, %eax
+    movb buf(,%edi,1), %al
+    mov %al , B
+    inc %edi
+
+    dec %ecx
+    mov $0, %eax
+    cmpl %ecx, %eax
+    je next1
+    movl $50, %eax
+    shll $1, %ebx
+checkR2:
+    cmpl R, %eax
+    ja checkG2
+    jmp decodeOneNumber
+checkG2:
+    cmpl G, %eax
+    ja checkB2
+    jmp decodeOneNumber
+checkB2:
+    cmpl B, %eax
+    ja blackBar
+    jmp decodeOneNumber
+
+blackBar:
+    or $0b1, %ebx
+    jmp decodeOneNumber
+
+next1:
+    mov %ebx, result(,%edx,4)
+    inc %edx
+    mov $0, %ebx
+    mov $8, %eax
+    cmp %edx, %eax
+    je exit
+    jmp decode
+
+exit:
  # exit(0)
     movl    $1, %eax  
     movl    $0, %ebx   
