@@ -1,5 +1,5 @@
 .data
-name: .string "./ean8.bmp"
+name: .string "./ean85.bmp"
 fd: .int 0
 buf: .space 3000000
 len: .long 0x86
