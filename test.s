@@ -181,6 +181,11 @@ decode:
     movl $8, %ecx
 decodeOneNumber:
 
+    dec %ecx
+    mov $0, %eax
+    cmpl %ecx, %eax
+    je next1
+
     movl $0, %eax
     movb buf(,%edi,1), %al
     mov %al , R
@@ -196,10 +201,7 @@ decodeOneNumber:
     mov %al , B
     inc %edi
 
-    dec %ecx
-    mov $0, %eax
-    cmpl %ecx, %eax
-    je next1
+
     movl $50, %eax
     shll $1, %ebx
 checkR2:
@@ -223,10 +225,35 @@ next1:
     mov %ebx, result(,%edx,4)
     inc %edx
     mov $0, %ebx
+
+    mov $4, %eax
+    cmp %edx, %eax
+    je skip
+
     mov $8, %eax
     cmp %edx, %eax
     je exit
     jmp decode
+
+skip:
+    inc %edi
+    inc %edi
+    inc %edi
+    inc %edi
+    inc %edi
+        inc %edi
+    inc %edi
+    inc %edi
+    inc %edi
+    inc %edi
+        inc %edi
+    inc %edi
+    inc %edi
+    inc %edi
+    inc %edi
+    jmp decode
+
+
 
 exit:
  # exit(0)
