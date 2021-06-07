@@ -1,5 +1,5 @@
 .data
-name: .string "./ean82.bmp"
+name: .string "./ean8.bmp"
 fd: .int 0
 buf: .space 3000000
 len: .long 0x86
@@ -116,7 +116,7 @@ jump:
     mov %al , B
     inc %edi
 
-    movl $150, %eax
+    movl $100, %eax
 checkR:
     cmpl R, %eax
     ja checkG
@@ -148,7 +148,7 @@ countBlackPixels:
     mov %al , B
     inc %edi
 
-    movl $150, %eax
+    movl $100, %eax
 checkR1:
     cmpl R, %eax
     ja checkG1
@@ -162,20 +162,25 @@ checkB1:
     ja countBlackPixels
     jmp next
 next:
-
+    subl $3, %edi
     # pominiecie paskow startowych
-    mov pixelsPerBar, %eax
-    dec %eax
-    mov $3, %ebx
-    mul %ebx
+    movl pixelsPerBar, %eax
+    movl $3, %ebx
+    mull %ebx
     addl %eax, %edi 
 
-    mov pixelsPerBar, %eax
-    mov $3, %ebx
-    mul %ebx
-    addl %eax, %edi 
+    movl pixelsPerBar, %eax
+    movl $3, %ebx
+    mull %ebx
+    addl %eax, %edi
+
+
+
+
+
+
     movl $0, %ebx
-    mov $0, %edx
+    movl $0, %edx
 
 decode:
     movl $8, %ecx
@@ -214,7 +219,7 @@ decodeOneNumber:
     addl %eax, %edi
 
 
-    movl $150, %eax
+    movl $100, %eax
     shll $1, %ebx
 checkR2:
     cmpl R, %eax
