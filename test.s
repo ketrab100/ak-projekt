@@ -1,5 +1,5 @@
 .data
-name: .string "./ean85.bmp"
+name: .string "./EAN-8.bmp"
 fd: .int 0
 buf: .space 3000000
 len: .long 0x86
@@ -174,7 +174,12 @@ next:
     mull %ebx
     addl %eax, %edi
 
-
+    movl pixelsPerBar, %eax
+    movl $2, %ebx
+    divl %ebx
+    movl $3, %ebx
+    mull %ebx
+    addl %eax, %edi
 
 
 
@@ -206,10 +211,9 @@ decodeOneNumber:
     mov %al , B
     inc %edi
 
-
-
+    subl $3, %edi
+    
     movl pixelsPerBar, %eax
-    dec %eax
     push %ebx
     movl $3, %ebx
     push %edx
