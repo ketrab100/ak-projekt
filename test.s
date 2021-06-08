@@ -1,7 +1,7 @@
 .data
-name: .string "./EAN-8.bmp"
+name: .string "./EAN-816.bmp"
 fd: .int 0
-buf: .space 3000000
+buf: .space 30000000
 len: .long 0x86
 sizex: .int 0
 sizey: .int 0
@@ -173,14 +173,6 @@ next:
     movl $3, %ebx
     mull %ebx
     addl %eax, %edi
-
-    movl pixelsPerBar, %eax
-    movl $2, %ebx
-    divl %ebx
-    movl $3, %ebx
-    mull %ebx
-    addl %eax, %edi
-
 
 
 
