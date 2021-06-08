@@ -1,5 +1,5 @@
 .data
-name: .string "./EAN-816.bmp"
+name: .string "./ean-81.bmp"
 fd: .int 0
 buf: .space 30000000
 len: .long 0x86
@@ -16,6 +16,13 @@ result:
     .long 0,0,0,0,0,0,0,0
     result_len = (.-result)
 
+leftCode:
+    .long 0b0001101,0b0011001,0b0010011,0b0111101,0b0100011,0b0110001,0b0101111,0b0111011,0b0110111,0b0001011
+
+rightCode:
+    .long 0b1110010,0b1100110,0b1101100,0b1000010,0b1011100,0b1001110,0b1010000,0b1000100,0b1001000,0b1110100
+
+codeValue: .long 0
 .text                       
 .globl _start                
 _start:
@@ -40,13 +47,6 @@ _start:
     movl $6, %eax # sys_close
     movl $name, %ebx
     int $0x80
-
-# print
-   movl $4, %eax
-   movl $1, %ebx
-   movl $buf,%ecx
-   movl len, %edx
-   int $0x80
 
 # get size
   movl $18, %edi 
@@ -245,7 +245,7 @@ next1:
 
     mov $8, %eax
     cmp %edx, %eax
-    je exit
+    je saveResult
     jmp decode
 
 skip:
@@ -258,8 +258,57 @@ skip:
     addl %eax, %edi
     jmp decode
 
+    
+saveResult:
+    mov $0, %ebx
 
+loop1:
+    mov $0,%edx
 
+loop:
+    mov result(,%ebx,4), %eax
+    cmpl %eax, leftCode(,%edx,4)
+    je convert
+    inc %edx
+    jmp loop
+convert:
+    addl %edx, codeValue
+    movl codeValue, %eax
+    movl $10, %ecx
+    push %edx
+    mull %ecx
+    pop %edx
+    movl %eax, codeValue
+    inc %ebx
+    movl $4, %eax
+    cmpl %ebx, %eax
+    je saveResult1
+    jmp loop1
+
+saveResult1:
+
+loop3:
+    mov $0,%edx
+
+loop2:
+    mov result(,%ebx,4), %eax
+    cmpl %eax, rightCode(,%edx,4)
+    je convert1
+    inc %edx
+    jmp loop2
+convert1:
+    addl %edx, codeValue
+    movl codeValue, %eax
+    movl $10, %ecx
+    push %edx
+    mull %ecx
+    pop %edx
+    movl %eax, codeValue
+    inc %ebx
+    movl $8, %eax
+    cmpl %ebx, %eax
+    je exit
+    jmp loop3
 exit:
  # exit(0)
     movl    $1, %eax  
