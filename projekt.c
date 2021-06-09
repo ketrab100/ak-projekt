@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include<fcntl.h>
 
-int reader(char*);
+long reader(char*);
 int main()
 {
     int fd = 0;
@@ -11,8 +11,8 @@ int main()
 
     fd = open(name,O_RDWR,O_APPEND);
     char* buf = malloc(30000000);
-    read(fd,buf,0x86);
-    int result;
+    read(fd,buf,30000000);
+    long result;
     result = reader(buf);
-    printf("%d", result);
+    printf("%ld", result);
 }

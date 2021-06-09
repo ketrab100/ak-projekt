@@ -1,24 +1,18 @@
 .data
-name: .string "./ean-81.bmp"
-fd: .int 0
-buf: .space 30000000
-len: .long 0x86
+buf: .quad 0
 sizex: .int 0
 sizey: .int 0
 R:.int 0
 G:.int 0
 B:.int 0
-DIBHeaderSize: .int 0
 pixelsPerBar: .int 0
 paddingBytes: .int 0
 offset: .int 0
 result: 
     .long 0,0,0,0,0,0,0,0
     result_len = (.-result)
-
 leftCode:
     .long 0b0001101,0b0011001,0b0010011,0b0111101,0b0100011,0b0110001,0b0101111,0b0111011,0b0110111,0b0001011
-
 rightCode:
     .long 0b1110010,0b1100110,0b1101100,0b1000010,0b1011100,0b1001110,0b1010000,0b1000100,0b1001000,0b1110100
 
@@ -61,15 +55,13 @@ padding0:
     movl $0, paddingBytes
 endCalcPaddingBytes:
 
-# get DIBHeaderSize
-    movl $14, %edi 
-    movl buf(,%edi,1), %eax
-    movl %eax, DIBHeaderSize
+# get offset
+    mov buf, %edi
+    add $10, %edi 
+    movl 0(%edi), %eax
+    movl %eax, offset
 
 # get pixelsPerBar
-    movl DIBHeaderSize, %eax
-    addl $14, %eax
-    movl %eax, offset
 
     movl $3, %eax
     mull sizex
@@ -88,18 +80,19 @@ endCalcPaddingBytes:
 
     addl %eax, offset
 
-    movl offset, %edi
+    movl buf, %edi
+    add offset, %edi
 jump:
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , R
     inc %edi
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , G
     inc %edi
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , B
     inc %edi
 
@@ -123,15 +116,15 @@ countBlackPixels:
     movl %eax, pixelsPerBar 
 
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , R
     inc %edi
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , G
     inc %edi
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , B
     inc %edi
 
@@ -176,17 +169,17 @@ decodeOneNumber:
     je next1
 
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , R
     inc %edi
 
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , G
     inc %edi
 
     movl $0, %eax
-    movb buf(,%edi,1), %al
+    movb 0(%edi), %al
     mov %al , B
     inc %edi
 
@@ -297,7 +290,7 @@ convert1:
     je exit
     jmp loop3
 exit:
-
+    mov codeValue, %eax
     pop %ebp
     ret
 
