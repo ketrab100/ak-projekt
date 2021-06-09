@@ -12,7 +12,7 @@ int main()
     fd = open(name,O_RDWR,O_APPEND);
     char* buf = malloc(30000000);
     read(fd,buf,30000000);
-    long result;
+    long result = 0;
     result = reader(buf);
     printf("%ld", result);
 }
