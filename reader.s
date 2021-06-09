@@ -1,5 +1,8 @@
 .data
-buf: .long 0
+name: .string "./ean-81.bmp"
+fd: .int 0
+buf: .space 30000000
+len: .long 0x86
 sizex: .int 0
 sizey: .int 0
 R:.int 0
@@ -13,14 +16,14 @@ currentOffset: .int 0
 result: 
     .long 0,0,0,0,0,0,0,0
     result_len = (.-result)
+
 leftCode:
     .long 0b0001101,0b0011001,0b0010011,0b0111101,0b0100011,0b0110001,0b0101111,0b0111011,0b0110111,0b0001011
 
 rightCode:
     .long 0b1110010,0b1100110,0b1101100,0b1000010,0b1011100,0b1001110,0b1010000,0b1000100,0b1001000,0b1110100
+
 codeValue: .long 0
-
-
 .text                       
 .globl reader                
 reader:
@@ -60,19 +63,14 @@ padding0:
 endCalcPaddingBytes:
 
 # get DIBHeaderSize
-<<<<<<< Updated upstream
 	mov buf, %edi
-=======
-    mov buf, %edi
->>>>>>> Stashed changes
     add $14, %edi 
     movl 0(%edi), %eax
     movl %eax, DIBHeaderSize
 
 # get pixelsPerBar
-    movl buf, %edi
-    addl $10, %edi
-    movl 0(%edi),%eax
+    movl DIBHeaderSize, %eax
+    addl $14, %eax
     movl %eax, offset
 
     movl $3, %eax
@@ -91,7 +89,6 @@ endCalcPaddingBytes:
     mull paddingBytes
 
     addl %eax, offset
-<<<<<<< Updated upstream
 
     movl offset, %esi
 jump:
@@ -99,32 +96,20 @@ jump:
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
-    mov buf, %edi
-    add offset, %edi
-jump:
-    movl $0, %eax
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , R
     inc %esi
     movl $0, %eax
-<<<<<<< Updated upstream
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , G
     inc %esi
     movl $0, %eax
-<<<<<<< Updated upstream
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , B
     inc %esi
@@ -149,32 +134,23 @@ countBlackPixels:
     movl %eax, pixelsPerBar 
 
     movl $0, %eax
-<<<<<<< Updated upstream
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , R
     inc %esi
     movl $0, %eax
-<<<<<<< Updated upstream
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , G
     inc %esi
     movl $0, %eax
-<<<<<<< Updated upstream
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , B
     inc %esi
@@ -220,34 +196,25 @@ decodeOneNumber:
     je next1
 
     movl $0, %eax
-<<<<<<< Updated upstream
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , R
     inc %esi
 
     movl $0, %eax
-<<<<<<< Updated upstream
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , G
     inc %esi
 
     movl $0, %eax
-<<<<<<< Updated upstream
     mov buf, %edi
     mov %esi, currentOffset
     add currentOffset, %edi
-=======
->>>>>>> Stashed changes
     movb 0(%edi), %al
     mov %al , B
     inc %esi
@@ -359,10 +326,6 @@ convert1:
     je exit
     jmp loop3
 exit:
-<<<<<<< Updated upstream
 	movl $1, %eax
-=======
-    mov codeValue, %eax
->>>>>>> Stashed changes
     pop %ebp
     ret
