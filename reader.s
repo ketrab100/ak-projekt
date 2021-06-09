@@ -23,8 +23,8 @@ reader:
   push %ebp
   mov %esp, %ebp
   
-  mov 8(%ebp), %ebx
-  mov %ebx, buf
+  movl 8(%ebp), %eax
+  movl %eax, buf
 
 # get size
   mov buf, %edi
@@ -42,9 +42,9 @@ reader:
     mull sizex                                              # eax *= sizex
     movl %eax, %ecx
     clc                                                     # clear carry flag
-    movl $4, %ebx
-    divl %ebx                                               # eax/=4
-    mull %ebx                                               # eax*=4 
+    movl $4, %esi
+    divl %esi                                               # eax/=4
+    mull %esi                                               # eax*=4 
     subl %ecx, %eax                                         # ecx -= eax  (3*sizex-[3*sizex/4*4] == 3*sizex%4)
     cmp $0, %eax
     je padding0
@@ -66,16 +66,16 @@ endCalcPaddingBytes:
     movl $3, %eax
     mull sizex
     movl %eax, %ecx # ilosc bajtow w jednym wierszu w rejestrze C
-    movl $2, %ebx
+    movl $2, %esi
     movl sizey, %eax
-    divl %ebx # wysokosci polowy obrazka w rejestrze A
+    divl %esi # wysokosci polowy obrazka w rejestrze A
     mull %ecx
 
     addl %eax, offset
 
-    movl $2, %ebx
+    movl $2, %esi
     movl sizey, %eax
-    divl %ebx # wysokosci polowy obrazka w rejestrze A
+    divl %esi # wysokosci polowy obrazka w rejestrze A
     mull paddingBytes
 
     addl %eax, offset
@@ -145,18 +145,18 @@ next:
     subl $3, %edi
     # pominiecie paskow startowych
     movl pixelsPerBar, %eax
-    movl $3, %ebx
-    mull %ebx
+    movl $3, %esi
+    mull %esi
     addl %eax, %edi 
 
     movl pixelsPerBar, %eax
-    movl $3, %ebx
-    mull %ebx
+    movl $3, %esi
+    mull %esi
     addl %eax, %edi
 
 
 
-    movl $0, %ebx
+    movl $0, %esi
     movl $0, %edx
 
 decode:
@@ -186,17 +186,17 @@ decodeOneNumber:
     subl $3, %edi
     
     movl pixelsPerBar, %eax
-    push %ebx
-    movl $3, %ebx
+    push %esi
+    movl $3, %esi
     push %edx
-    mull %ebx
+    mull %esi
     pop %edx
-    pop %ebx
+    pop %esi
     addl %eax, %edi
 
 
     movl $100, %eax
-    shll $1, %ebx
+    shll $1, %esi
 checkR2:
     cmpl R, %eax
     ja checkG2
@@ -211,13 +211,13 @@ checkB2:
     jmp decodeOneNumber
 
 blackBar:
-    or $0b1, %ebx
+    or $0b1, %esi
     jmp decodeOneNumber
 
 next1:
-    mov %ebx, result(,%edx,4)
+    mov %esi, result(,%edx,4)
     inc %edx
-    mov $0, %ebx
+    mov $0, %esi
 
     mov $4, %eax
     cmp %edx, %eax
@@ -230,23 +230,23 @@ next1:
 
 skip:
     movl pixelsPerBar, %eax
-    movl $15, %ebx
+    movl $15, %esi
     push %edx
-    mull %ebx
+    mull %esi
     pop %edx
-    movl $0, %ebx
+    movl $0, %esi
     addl %eax, %edi
     jmp decode
 
     
 saveResult:
-    mov $0, %ebx
+    mov $0, %esi
 
 loop1:
     mov $0,%edx
 
 loop:
-    mov result(,%ebx,4), %eax
+    mov result(,%esi,4), %eax
     cmpl %eax, leftCode(,%edx,4)
     je convert
     inc %edx
@@ -259,9 +259,9 @@ convert:
     mull %ecx
     pop %edx
     movl %eax, codeValue
-    inc %ebx
+    inc %esi
     movl $4, %eax
-    cmpl %ebx, %eax
+    cmpl %esi, %eax
     je saveResult1
     jmp loop1
 
@@ -271,7 +271,7 @@ loop3:
     mov $0,%edx
 
 loop2:
-    mov result(,%ebx,4), %eax
+    mov result(,%esi,4), %eax
     cmpl %eax, rightCode(,%edx,4)
     je convert1
     inc %edx
@@ -284,9 +284,9 @@ convert1:
     mull %ecx
     pop %edx
     movl %eax, codeValue
-    inc %ebx
+    inc %esi
     movl $8, %eax
-    cmpl %ebx, %eax
+    cmpl %esi, %eax
     je exit
     jmp loop3
 exit:
