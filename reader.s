@@ -2,6 +2,7 @@
 buf: .quad 0
 sizex: .int 0
 sizey: .int 0
+size: .int 0
 R:.int 0
 G:.int 0
 B:.int 0
@@ -15,8 +16,8 @@ leftCode:
     .long 0b0001101,0b0011001,0b0010011,0b0111101,0b0100011,0b0110001,0b0101111,0b0111011,0b0110111,0b0001011
 rightCode:
     .long 0b1110010,0b1100110,0b1101100,0b1000010,0b1011100,0b1001110,0b1010000,0b1000100,0b1001000,0b1110100
-
 codeValue: .long 0
+
 .text                       
 .globl reader                
 reader:
@@ -26,16 +27,38 @@ reader:
   movl 8(%ebp), %eax
   movl %eax, buf
 
+  mov $0, %eax
+
+  mov buf, %edi
+  movb 0(%edi), %al
+  cmpl $0x42, %eax
+  jne error
+  add $1, %edi
+  movb 0(%edi), %al
+  cmpl $0x4D, %eax
+  jne error
+  mov buf, %edi
+  add $0x1c, %edi
+  movb 0(%edi), %al
+  cmpl $0x18, %eax
+  jne error
+
 # get size
+  mov buf, %edi
+  add $2, %edi 
+  movl 0(%edi), %eax
+  movl %eax, size
+
+
   mov buf, %edi
   add $18, %edi 
   mov 0(%edi), %eax
-  movl %eax, sizex
+  mov %eax, sizex
 
   mov buf, %edi
   add $22, %edi 
   mov 0(%edi), %eax
-  movl %eax, sizey
+  mov %eax, sizey
 
 # calcPaddingBytes
     movl $3, %eax                                           # 3 to eax (3 bytes per color)
@@ -83,6 +106,12 @@ endCalcPaddingBytes:
     movl buf, %edi
     add offset, %edi
 jump:
+    movl buf, %eax
+    add size, %eax
+    add $4, %eax
+    cmpl %eax, %edi
+    ja error
+
     movl $0, %eax
     movb 0(%edi), %al
     mov %al , R
@@ -111,6 +140,12 @@ checkB:
     jmp jump
 
 countBlackPixels:
+    movl buf, %eax
+    add size, %eax
+    add $4, %eax
+    cmpl %eax, %edi
+    ja error
+
     movl pixelsPerBar, %eax
     inc %eax
     movl %eax, pixelsPerBar 
@@ -153,15 +188,17 @@ next:
     movl $3, %esi
     mull %esi
     addl %eax, %edi
-
-
-
     movl $0, %esi
     movl $0, %edx
 
 decode:
     movl $8, %ecx
 decodeOneNumber:
+    movl buf, %eax
+    add size, %eax
+    add $4, %eax
+    cmpl %eax, %edi
+    ja error
 
     dec %ecx
     mov $0, %eax
@@ -291,6 +328,11 @@ convert1:
     jmp loop3
 exit:
     mov codeValue, %eax
+    pop %ebp
+    ret
+
+error:
+    mov $1000000000, %eax
     pop %ebp
     ret
 
