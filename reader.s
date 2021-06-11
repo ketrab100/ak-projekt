@@ -240,7 +240,6 @@ decodeOneNumber:
     pop %esi
     addl %eax, %edi
 
-
     movl $100, %eax
     shll $1, %esi
 checkR2:
@@ -338,7 +337,7 @@ convert1:
     je exit
     jmp loop3
 
-;zwracana jest wartosc odkodowanego obrazku
+;zwracana jest wartosc odkodowanego obrazu
 exit:
     mov codeValue, %eax
     pop %ebp
